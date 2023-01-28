@@ -1,12 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { UserEntityWithRelations } from './types';
 
-export const resolveUsers = async (args: any, fastify: FastifyInstance) => {
-  const users = await fastify.db.users.findMany();
+export const resolveUserById = async (args: any, fastify: FastifyInstance) => {
+  const user: UserEntityWithRelations = await fastify.db.users.findOne({
+    key: 'id',
+    equals: args.id,
+  });
 
-  for (let i = 0; i < users.length; i++) {
-    const user: UserEntityWithRelations = users[i];
-
+  if (user) {
     user.posts = await fastify.db.posts.findMany({
       key: 'userId',
       equals: user.id,
@@ -25,9 +26,7 @@ export const resolveUsers = async (args: any, fastify: FastifyInstance) => {
 
       user.profile = { ...profile, memberType };
     }
-
-    users[i] = user;
   }
 
-  return users;
+  return user;
 };

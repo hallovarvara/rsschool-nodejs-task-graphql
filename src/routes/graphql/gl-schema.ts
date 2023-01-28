@@ -75,5 +75,6 @@ export const schema = buildSchema(`
     entities: Entities!
     entityById(id: ID!): Entity!
     users: [UserWithRelations]!
+    user(id: ID!): UserWithRelations
   }
 `);
