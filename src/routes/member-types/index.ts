@@ -3,12 +3,20 @@ import { idParamSchema } from '../../utils/reusedSchemas';
 import { changeMemberTypeBodySchema } from './schema';
 import type { MemberTypeEntity } from '../../utils/DB/entities/DBMemberTypes';
 
+const mock: MemberTypeEntity = {
+  id: 'sdfsdf45244324',
+  discount: 20,
+  monthPostsLimit: 5,
+};
+
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
-  fastify
+  fastify,
 ): Promise<void> => {
   fastify.get('/', async function (request, reply): Promise<
     MemberTypeEntity[]
-  > {});
+  > {
+    return [mock];
+  });
 
   fastify.get(
     '/:id',
@@ -17,7 +25,9 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {}
+    async function (request, reply): Promise<MemberTypeEntity> {
+      return mock;
+    },
   );
 
   fastify.patch(
@@ -28,7 +38,9 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {}
+    async function (request, reply): Promise<MemberTypeEntity> {
+      return mock;
+    },
   );
 };
 
