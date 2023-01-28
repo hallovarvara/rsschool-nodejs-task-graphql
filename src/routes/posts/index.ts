@@ -1,7 +1,6 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createPostBodySchema, changePostBodySchema } from './schema';
-import { db } from '../../utils/db-instance';
 import {
   getNoEntityIdErrorMessage,
   getNoRequiredFieldsErrorMessage,
@@ -11,7 +10,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
   fastify.get('/', async function (request, reply): Promise<void> {
-    const posts = await db.posts.findMany();
+    const posts = await fastify.db.posts.findMany();
     reply.code(200).send(posts);
   });
 
@@ -23,7 +22,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const post = await db.posts.findOne({
+      const post = await fastify.db.posts.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -52,7 +51,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
       if (title && content && userId) {
         const post = { title, content, userId };
-        const response = await db.posts.create(post);
+        const response = await fastify.db.posts.create(post);
         reply.code(201).send(response);
         return;
       }
@@ -71,7 +70,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const posts = await db.posts.findMany();
+      const posts = await fastify.db.posts.findMany();
       const { id } = request.params;
       const targetPost = posts.find((post) => post.id === id);
 
@@ -80,7 +79,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         return;
       }
 
-      await db.posts.delete(request.params.id);
+      await fastify.db.posts.delete(request.params.id);
 
       reply.code(200).send(targetPost);
     },
@@ -95,7 +94,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const post = await db.posts.findOne({
+      const post = await fastify.db.posts.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -114,7 +113,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         content: content || post.content,
       };
 
-      await db.posts.change(request.params.id, newFields);
+      await fastify.db.posts.change(request.params.id, newFields);
 
       reply.code(200).send({ ...post, ...newFields });
     },

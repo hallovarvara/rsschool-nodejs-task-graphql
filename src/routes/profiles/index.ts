@@ -1,7 +1,6 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createProfileBodySchema, changeProfileBodySchema } from './schema';
-import { db } from '../../utils/db-instance';
 import {
   getNoEntityIdErrorMessage,
   getNoRequiredFieldsErrorMessage,
@@ -11,7 +10,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
   fastify.get('/', async function (request, reply): Promise<void> {
-    const profiles = await db.profiles.findMany();
+    const profiles = await fastify.db.profiles.findMany();
     reply.code(200).send(profiles);
   });
 
@@ -23,7 +22,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const profile = await db.profiles.findOne({
+      const profile = await fastify.db.profiles.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -59,7 +58,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         userId,
       } = request.body;
 
-      const profiles = await db.profiles.findMany();
+      const profiles = await fastify.db.profiles.findMany();
 
       if (profiles.some((profile) => profile.userId === userId)) {
         reply
@@ -68,7 +67,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         return;
       }
 
-      const memberTypes = await db.memberTypes.findMany();
+      const memberTypes = await fastify.db.memberTypes.findMany();
 
       if (!memberTypes.some((memberType) => memberType.id === memberTypeId)) {
         reply
@@ -98,7 +97,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           userId,
         };
 
-        const response = await db.profiles.create(profile);
+        const response = await fastify.db.profiles.create(profile);
         reply.code(201).send(response);
         return;
       }
@@ -126,7 +125,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const profiles = await db.profiles.findMany();
+      const profiles = await fastify.db.profiles.findMany();
       const { id } = request.params;
       const targetProfile = profiles.find((profile) => profile.id === id);
 
@@ -135,7 +134,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         return;
       }
 
-      await db.profiles.delete(request.params.id);
+      await fastify.db.profiles.delete(request.params.id);
 
       reply.code(200).send(targetProfile);
     },
@@ -150,7 +149,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const profile = await db.profiles.findOne({
+      const profile = await fastify.db.profiles.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -175,7 +174,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         memberTypeId: memberTypeId || profile.memberTypeId,
       };
 
-      await db.profiles.change(request.params.id, newFields);
+      await fastify.db.profiles.change(request.params.id, newFields);
 
       reply.code(200).send({ ...profile, ...newFields });
     },

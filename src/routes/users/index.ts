@@ -11,13 +11,12 @@ import {
   getNoEntityIdxErrorMessage,
   getNoRequiredFieldsErrorMessage,
 } from '../../utils/get-error-messages';
-import { db } from '../../utils/db-instance';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
   fastify.get('/', async function (request, reply): Promise<void> {
-    const users = await db.users.findMany();
+    const users = await fastify.db.users.findMany();
     reply.code(200).send(users);
   });
 
@@ -29,7 +28,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const user = await db.users.findOne({
+      const user = await fastify.db.users.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -58,7 +57,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
       if (firstName && lastName && email) {
         const user = { firstName, lastName, email };
-        const response = await db.users.create(user);
+        const response = await fastify.db.users.create(user);
         reply.code(201).send(response);
         return;
       }
@@ -81,7 +80,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const users = await db.users.findMany();
+      const users = await fastify.db.users.findMany();
       const { id } = request.params;
       const targetUser = users.find((user) => user.id === id);
 
@@ -98,7 +97,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         }
 
         if (user.subscribedToUserIds.includes(id)) {
-          await db.users.change(user.id, {
+          await fastify.db.users.change(user.id, {
             subscribedToUserIds: user.subscribedToUserIds.filter(
               (userId) => userId !== id,
             ),
@@ -106,28 +105,28 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         }
       }
 
-      const posts = await db.posts.findMany();
+      const posts = await fastify.db.posts.findMany();
 
       for (let i = 0; i < posts.length; i++) {
         const post = posts[i];
 
         if (post.userId === id) {
-          await db.posts.delete(post.id);
+          await fastify.db.posts.delete(post.id);
         }
       }
 
-      const profiles = await db.profiles.findMany();
+      const profiles = await fastify.db.profiles.findMany();
 
       for (let i = 0; i < profiles.length; i++) {
         const profile = profiles[i];
 
         if (profile.userId === id) {
-          await db.profiles.delete(profile.id);
+          await fastify.db.profiles.delete(profile.id);
           break;
         }
       }
 
-      await db.users.delete(request.params.id);
+      await fastify.db.users.delete(request.params.id);
 
       reply.code(200).send(targetUser);
     },
@@ -142,7 +141,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const users = await db.users.findMany({
+      const users = await fastify.db.users.findMany({
         key: 'id',
         equalsAnyOf: [request.body.userId, request.params.id],
       });
@@ -161,7 +160,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       }
 
       const subscribedToUserIds = union(user1.subscribedToUserIds, [user2.id]);
-      await db.users.change(user1.id, { subscribedToUserIds });
+      await fastify.db.users.change(user1.id, { subscribedToUserIds });
 
       reply.code(200).send({ ...user1, subscribedToUserIds });
     },
@@ -176,7 +175,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const users = await db.users.findMany({
+      const users = await fastify.db.users.findMany({
         key: 'id',
         equalsAnyOf: [request.body.userId, request.params.id],
       });
@@ -205,7 +204,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         (id) => id !== user2.id,
       );
 
-      await db.users.change(user1.id, { subscribedToUserIds });
+      await fastify.db.users.change(user1.id, { subscribedToUserIds });
 
       reply.code(200).send({ ...user1, subscribedToUserIds });
     },
@@ -220,7 +219,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<void> {
-      const user = await db.users.findOne({
+      const user = await fastify.db.users.findOne({
         key: 'id',
         equals: request.params.id,
       });
@@ -240,7 +239,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         email: email || user.email,
       };
 
-      await db.users.change(request.params.id, newFields);
+      await fastify.db.users.change(request.params.id, newFields);
 
       reply.code(200).send({ ...user, ...newFields });
     },
