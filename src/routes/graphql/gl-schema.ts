@@ -40,8 +40,16 @@ export const schema = buildSchema(`
     profiles: [Profile!]!
     users: [User!]!
   }
+  
+  type Entity {
+    user: User
+    profile: Profile
+    post: Post
+    memberType: MemberType
+  }
 
   type Query {
     entities: Entities!
+    entityById(id: ID!): Entity!
   }
 `);
