@@ -14,7 +14,7 @@ export const schema = buildSchema(`
     userId: String!
   }
 
-  type Profile {
+  interface Profile {
     avatar: String!
     birthday: Int!
     city: String!
@@ -25,13 +25,36 @@ export const schema = buildSchema(`
     street: String!
     userId: String!
   }
+  
+  type ProfileWithMemberType implements Profile {
+    avatar: String!
+    birthday: Int!
+    city: String!
+    country: String!
+    id: ID!
+    memberTypeId: String!
+    sex: String!
+    street: String!
+    userId: String!
+    memberType: MemberType
+  }
 
-  type User {
+  interface User {
     email: String
     firstName: String
     id: ID!
     lastName: String
     subscribedToUserIds: [String!]!
+  }
+  
+  type UserWithRelations implements User {
+    email: String
+    firstName: String
+    id: ID!
+    lastName: String
+    subscribedToUserIds: [String!]!
+    posts: [Post]
+    profile: ProfileWithMemberType
   }
   
   type Entities {
@@ -51,5 +74,6 @@ export const schema = buildSchema(`
   type Query {
     entities: Entities!
     entityById(id: ID!): Entity!
+    users: [UserWithRelations]!
   }
 `);
