@@ -1,21 +1,15 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { changeMemberTypeBodySchema } from './schema';
-import type { MemberTypeEntity } from '../../utils/DB/entities/DBMemberTypes';
-
-const mock: MemberTypeEntity = {
-  id: 'sdfsdf45244324',
-  discount: 20,
-  monthPostsLimit: 5,
-};
+import { db } from '../../utils/db-instance';
+import { getNoEntityIdErrorMessage } from '../../utils/get-error-messages';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<
-    MemberTypeEntity[]
-  > {
-    return [mock];
+  fastify.get('/', async function (request, reply): Promise<void> {
+    const memberTypes = await db.memberTypes.findMany();
+    reply.code(200).send(memberTypes);
   });
 
   fastify.get(
@@ -25,8 +19,21 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {
-      return mock;
+    async function (request, reply): Promise<void> {
+      const memberType = await db.memberTypes.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!memberType) {
+        reply
+          .code(404)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+
+        return;
+      }
+
+      reply.code(200).send(memberType);
     },
   );
 
@@ -38,8 +45,29 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {
-      return mock;
+    async function (request, reply): Promise<void> {
+      const memberType = await db.memberTypes.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!memberType) {
+        reply
+          .code(400)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+        return;
+      }
+
+      const { discount, monthPostsLimit } = request.body;
+
+      const newFields = {
+        discount: discount || memberType.discount,
+        monthPostsLimit: monthPostsLimit || memberType.monthPostsLimit,
+      };
+
+      await db.memberTypes.change(request.params.id, newFields);
+
+      reply.code(200).send({ ...memberType, ...newFields });
     },
   );
 };
