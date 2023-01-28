@@ -9,6 +9,7 @@ import { union } from 'lodash';
 import {
   getNoEntityIdErrorMessage,
   getNoEntityIdxErrorMessage,
+  getNoRequiredFieldsErrorMessage,
 } from '../../utils/get-error-messages';
 import { db } from '../../utils/db-instance';
 
@@ -63,7 +64,11 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       }
 
       reply.code(404).send({
-        message: '"firstName", "lastName" and "email" are required for request',
+        message: getNoRequiredFieldsErrorMessage(
+          'firstName',
+          'lastName',
+          'email',
+        ),
       });
     },
   );
@@ -108,6 +113,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
         if (post.userId === id) {
           await db.posts.delete(post.id);
+        }
+      }
+
+      const profiles = await db.profiles.findMany();
+
+      for (let i = 0; i < profiles.length; i++) {
+        const profile = profiles[i];
+
+        if (profile.userId === id) {
+          await db.profiles.delete(profile.id);
+          break;
         }
       }
 

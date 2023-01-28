@@ -2,7 +2,10 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createPostBodySchema, changePostBodySchema } from './schema';
 import { db } from '../../utils/db-instance';
-import { getNoEntityIdErrorMessage } from '../../utils/get-error-messages';
+import {
+  getNoEntityIdErrorMessage,
+  getNoRequiredFieldsErrorMessage,
+} from '../../utils/get-error-messages';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
@@ -55,7 +58,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       }
 
       reply.code(404).send({
-        message: '"title", "content" and "userId" are required for request',
+        message: getNoRequiredFieldsErrorMessage('title', 'content', 'userId'),
       });
     },
   );
