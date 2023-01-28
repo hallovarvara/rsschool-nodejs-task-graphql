@@ -5,22 +5,19 @@ import {
   createUserBodySchema,
   subscribeBodySchema,
 } from './schemas';
-import type { UserEntity } from '../../utils/DB/entities/DBUsers';
-import DB from '../../utils/DB/DB';
 import { union } from 'lodash';
 import {
   getNoEntityIdErrorMessage,
   getNoEntityIdxErrorMessage,
 } from '../../utils/get-error-messages';
-
-const db = new DB();
+import { db } from '../../utils/db-instance';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<UserEntity[]> {
-    reply.code(200);
-    return db.users.findMany();
+  fastify.get('/', async function (request, reply): Promise<void> {
+    const users = await db.users.findMany();
+    reply.code(200).send(users);
   });
 
   fastify.get(
@@ -101,6 +98,16 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
               (userId) => userId !== id,
             ),
           });
+        }
+      }
+
+      const posts = await db.posts.findMany();
+
+      for (let i = 0; i < posts.length; i++) {
+        const post = posts[i];
+
+        if (post.userId === id) {
+          await db.posts.delete(post.id);
         }
       }
 
@@ -196,7 +203,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity | void> {
+    async function (request, reply): Promise<void> {
       const user = await db.users.findOne({
         key: 'id',
         equals: request.params.id,
@@ -218,8 +225,8 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       };
 
       await db.users.change(request.params.id, newFields);
-      reply.code(200);
-      return { ...user, ...request.body };
+
+      reply.code(200).send({ ...user, ...newFields });
     },
   );
 };
