@@ -57,6 +57,16 @@ export const schema = buildSchema(`
     profile: ProfileWithMemberType
   }
   
+  type UserWithSubscriptionsAndProfile implements User {
+    email: String
+    firstName: String
+    id: ID!
+    lastName: String
+    subscribedToUserIds: [String!]!
+    userSubscribedTo: [String]
+    profile: Profile
+  }
+  
   type Entities {
     memberTypes: [MemberType!]!
     posts: [Post!]!
@@ -76,5 +86,6 @@ export const schema = buildSchema(`
     entityById(id: ID!): Entity!
     users: [UserWithRelations]!
     user(id: ID!): UserWithRelations
+    usersWithSubscriptionsAndProfiles: [UserWithSubscriptionsAndProfile]
   }
 `);

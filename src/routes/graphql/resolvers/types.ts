@@ -7,9 +7,15 @@ export type ProfileWithMemberTypeEntity = ProfileEntity & {
   memberType: MemberTypeEntity | null;
 };
 
-export type UserEntityWithRelations =
-  | (UserEntity & {
-      posts?: PostEntity[];
-      profile?: ProfileWithMemberTypeEntity;
-    })
-  | null;
+type UserRelations = {
+  posts?: PostEntity[];
+  profile?: ProfileWithMemberTypeEntity;
+};
+
+export type UserEntityWithRelations = (UserEntity & UserRelations) | null;
+
+export type UserEntityWithSubscriptions = UserEntity & {
+  profile?: ProfileEntity;
+  userSubscribedTo?: string[];
+  subscribedToUser?: string[];
+};
