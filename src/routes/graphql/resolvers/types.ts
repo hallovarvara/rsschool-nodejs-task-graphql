@@ -19,3 +19,8 @@ export type UserEntityWithSubscriptions = UserEntity & {
   userSubscribedTo?: string[];
   subscribedToUser?: string[];
 };
+
+export type UserEntityWithSubscribersAndPosts = UserEntity & {
+  subscribedToUser?: string[];
+  posts?: PostEntity[];
+};
