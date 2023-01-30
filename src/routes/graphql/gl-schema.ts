@@ -77,6 +77,15 @@ export const schema = buildSchema(`
     posts: [Post]
   }
   
+  type UsersWithSubscriptions {
+    email: String
+    firstName: String
+    id: ID!
+    lastName: String
+    userSubscribedTo: [UsersWithSubscriptions]
+    subscribedToUser: [UsersWithSubscriptions]
+  }
+  
   type Entities {
     memberTypes: [MemberType!]!
     posts: [Post!]!
@@ -98,5 +107,6 @@ export const schema = buildSchema(`
     user(id: ID!): UserWithRelations
     usersWithSubscriptionsAndProfiles: [UserWithSubscriptionsAndProfile]
     userByIdWithSubscribersAndPosts(id: ID!): UserByIdWithSubscribersAndPosts
+    usersWithSubscriptions: [UsersWithSubscriptions]
   }
 `);

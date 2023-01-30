@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import { UserEntityWithSubscriptions } from './types';
+import { UserEntityWithSubscriptionsAndProfile } from './types';
 import { isNonEmptyArray } from '../utils/is-non-empty-array';
 
 export const resolveUsersWithSubscriptionsAndProfiles = async (
   args: any,
   fastify: FastifyInstance,
 ) => {
-  const users: UserEntityWithSubscriptions[] =
+  const users: UserEntityWithSubscriptionsAndProfile[] =
     await fastify.db.users.findMany();
 
   if (!users || users.length === 0) {
@@ -15,11 +15,11 @@ export const resolveUsersWithSubscriptionsAndProfiles = async (
 
   const usersById = users.reduce(
     (result, user) => ({ ...result, [user.id]: user }),
-    {} as { [key: string]: UserEntityWithSubscriptions },
+    {} as { [key: string]: UserEntityWithSubscriptionsAndProfile },
   );
 
   for (let i = 0; i < users.length; i++) {
-    const user: UserEntityWithSubscriptions = users[i];
+    const user: UserEntityWithSubscriptionsAndProfile = users[i];
 
     if (!user.userSubscribedTo) {
       user.userSubscribedTo = [];

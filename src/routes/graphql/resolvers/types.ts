@@ -14,10 +14,15 @@ type UserRelations = {
 
 export type UserEntityWithRelations = (UserEntity & UserRelations) | null;
 
-export type UserEntityWithSubscriptions = UserEntity & {
+export type UserEntityWithSubscriptionsAndProfile = UserEntity & {
   profile?: ProfileEntity;
   userSubscribedTo?: UserEntity[];
   subscribedToUser?: UserEntity[];
+};
+
+export type UserEntityWithSubscriptions = UserEntity & {
+  userSubscribedTo: UserEntityWithSubscriptions[];
+  subscribedToUser: UserEntityWithSubscriptions[];
 };
 
 export type UserEntityWithSubscribersAndPosts = UserEntity & {
