@@ -16,11 +16,11 @@ export type UserEntityWithRelations = (UserEntity & UserRelations) | null;
 
 export type UserEntityWithSubscriptions = UserEntity & {
   profile?: ProfileEntity;
-  userSubscribedTo?: string[];
-  subscribedToUser?: string[];
+  userSubscribedTo?: UserEntity[];
+  subscribedToUser?: UserEntity[];
 };
 
 export type UserEntityWithSubscribersAndPosts = UserEntity & {
-  subscribedToUser?: string[];
+  subscribedToUser?: UserEntity[];
   posts?: PostEntity[];
 };

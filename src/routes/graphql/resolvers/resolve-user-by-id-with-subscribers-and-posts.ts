@@ -14,7 +14,10 @@ export const resolveUserByIdWithSubscribersAndPosts = async (
 
   if (user) {
     user.subscribedToUser = isNonEmptyArray(user.subscribedToUserIds)
-      ? [...user.subscribedToUserIds]
+      ? await fastify.db.users.findMany({
+          key: 'id',
+          equals: args.id,
+        })
       : [];
 
     user.posts = await fastify.db.posts.findMany({

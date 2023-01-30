@@ -14,7 +14,7 @@ export const schema = buildSchema(`
     userId: String!
   }
 
-  interface Profile {
+  type Profile {
     avatar: String!
     birthday: Int!
     city: String!
@@ -26,7 +26,7 @@ export const schema = buildSchema(`
     userId: String!
   }
   
-  type ProfileWithMemberType implements Profile {
+  type ProfileWithMemberType {
     avatar: String!
     birthday: Int!
     city: String!
@@ -39,7 +39,7 @@ export const schema = buildSchema(`
     memberType: MemberType
   }
 
-  interface User {
+  type User {
     email: String
     firstName: String
     id: ID!
@@ -47,7 +47,7 @@ export const schema = buildSchema(`
     subscribedToUserIds: [String!]!
   }
   
-  type UserWithRelations implements User {
+  type UserWithRelations {
     email: String
     firstName: String
     id: ID!
@@ -57,23 +57,23 @@ export const schema = buildSchema(`
     profile: ProfileWithMemberType
   }
   
-  type UserWithSubscriptionsAndProfile implements User {
+  type UserWithSubscriptionsAndProfile {
     email: String
     firstName: String
     id: ID!
     lastName: String
     subscribedToUserIds: [String!]!
-    userSubscribedTo: [String]
+    userSubscribedTo: [User]
     profile: Profile
   }
   
-  type UserByIdWithSubscribersAndPosts implements User {
+  type UserByIdWithSubscribersAndPosts {
     email: String
     firstName: String
     id: ID!
     lastName: String
     subscribedToUserIds: [String!]!
-    subscribedToUser: [String]
+    subscribedToUser: [User]
     posts: [Post]
   }
   

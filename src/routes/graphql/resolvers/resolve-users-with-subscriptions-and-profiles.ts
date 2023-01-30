@@ -31,7 +31,7 @@ export const resolveUsersWithSubscriptionsAndProfiles = async (
 
         usersById[subscriberId].userSubscribedTo = [
           ...(usersById[subscriberId].userSubscribedTo || []),
-          user.id,
+          user,
         ];
       }
     }
