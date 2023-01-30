@@ -1,14 +1,15 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { changeMemberTypeBodySchema } from './schema';
-import type { MemberTypeEntity } from '../../utils/DB/entities/DBMemberTypes';
+import { getNoEntityIdErrorMessage } from '../../utils/get-error-messages';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
-  fastify
+  fastify,
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<
-    MemberTypeEntity[]
-  > {});
+  fastify.get('/', async function (request, reply): Promise<void> {
+    const memberTypes = await fastify.db.memberTypes.findMany();
+    reply.code(200).send(memberTypes);
+  });
 
   fastify.get(
     '/:id',
@@ -17,7 +18,22 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {}
+    async function (request, reply): Promise<void> {
+      const memberType = await fastify.db.memberTypes.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!memberType) {
+        reply
+          .code(404)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+
+        return;
+      }
+
+      reply.code(200).send(memberType);
+    },
   );
 
   fastify.patch(
@@ -28,7 +44,30 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {}
+    async function (request, reply): Promise<void> {
+      const memberType = await fastify.db.memberTypes.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!memberType) {
+        reply
+          .code(400)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+        return;
+      }
+
+      const { discount, monthPostsLimit } = request.body;
+
+      const newFields = {
+        discount: discount || memberType.discount,
+        monthPostsLimit: monthPostsLimit || memberType.monthPostsLimit,
+      };
+
+      await fastify.db.memberTypes.change(request.params.id, newFields);
+
+      reply.code(200).send({ ...memberType, ...newFields });
+    },
   );
 };
 

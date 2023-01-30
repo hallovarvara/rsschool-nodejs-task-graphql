@@ -1,16 +1,24 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import { idParamSchema } from '../../utils/reusedSchemas';
 import {
-  createUserBodySchema,
   changeUserBodySchema,
+  createUserBodySchema,
   subscribeBodySchema,
 } from './schemas';
-import type { UserEntity } from '../../utils/DB/entities/DBUsers';
+import { union } from 'lodash';
+import {
+  getNoEntityIdErrorMessage,
+  getNoEntityIdxErrorMessage,
+  getNoRequiredFieldsErrorMessage,
+} from '../../utils/get-error-messages';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
-  fastify
+  fastify,
 ): Promise<void> => {
-  fastify.get('/', async function (request, reply): Promise<UserEntity[]> {});
+  fastify.get('/', async function (request, reply): Promise<void> {
+    const users = await fastify.db.users.findMany();
+    reply.code(200).send(users);
+  });
 
   fastify.get(
     '/:id',
@@ -19,7 +27,22 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const user = await fastify.db.users.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!user) {
+        reply
+          .code(404)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+
+        return;
+      }
+
+      reply.code(200).send(user);
+    },
   );
 
   fastify.post(
@@ -29,7 +52,24 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createUserBodySchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const { firstName, lastName, email } = request.body;
+
+      if (firstName && lastName && email) {
+        const user = { firstName, lastName, email };
+        const response = await fastify.db.users.create(user);
+        reply.code(201).send(response);
+        return;
+      }
+
+      reply.code(404).send({
+        message: getNoRequiredFieldsErrorMessage(
+          'firstName',
+          'lastName',
+          'email',
+        ),
+      });
+    },
   );
 
   fastify.delete(
@@ -39,7 +79,57 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const users = await fastify.db.users.findMany();
+      const { id } = request.params;
+      const targetUser = users.find((user) => user.id === id);
+
+      if (!targetUser) {
+        reply.code(400).send({ message: getNoEntityIdErrorMessage(id) });
+        return;
+      }
+
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+
+        if (user.id === id) {
+          continue;
+        }
+
+        if (user.subscribedToUserIds.includes(id)) {
+          await fastify.db.users.change(user.id, {
+            subscribedToUserIds: user.subscribedToUserIds.filter(
+              (userId) => userId !== id,
+            ),
+          });
+        }
+      }
+
+      const posts = await fastify.db.posts.findMany();
+
+      for (let i = 0; i < posts.length; i++) {
+        const post = posts[i];
+
+        if (post.userId === id) {
+          await fastify.db.posts.delete(post.id);
+        }
+      }
+
+      const profiles = await fastify.db.profiles.findMany();
+
+      for (let i = 0; i < profiles.length; i++) {
+        const profile = profiles[i];
+
+        if (profile.userId === id) {
+          await fastify.db.profiles.delete(profile.id);
+          break;
+        }
+      }
+
+      await fastify.db.users.delete(request.params.id);
+
+      reply.code(200).send(targetUser);
+    },
   );
 
   fastify.post(
@@ -50,7 +140,30 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const users = await fastify.db.users.findMany({
+        key: 'id',
+        equalsAnyOf: [request.body.userId, request.params.id],
+      });
+
+      const user1 = users.find((user) => user.id === request.body.userId);
+      const user2 = users.find((user) => user.id === request.params.id);
+
+      if (!user1 || !user2) {
+        reply.code(400).send({
+          message: getNoEntityIdxErrorMessage(
+            request.body.userId,
+            request.params.id,
+          ),
+        });
+        return;
+      }
+
+      const subscribedToUserIds = union(user1.subscribedToUserIds, [user2.id]);
+      await fastify.db.users.change(user1.id, { subscribedToUserIds });
+
+      reply.code(200).send({ ...user1, subscribedToUserIds });
+    },
   );
 
   fastify.post(
@@ -61,7 +174,40 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const users = await fastify.db.users.findMany({
+        key: 'id',
+        equalsAnyOf: [request.body.userId, request.params.id],
+      });
+
+      const user1 = users.find((user) => user.id === request.body.userId);
+      const user2 = users.find((user) => user.id === request.params.id);
+
+      if (!user1 || !user2) {
+        reply.code(400).send({
+          message: getNoEntityIdxErrorMessage(
+            request.body.userId,
+            request.params.id,
+          ),
+        });
+        return;
+      }
+
+      if (!user1.subscribedToUserIds.includes(user2.id)) {
+        reply.code(400).send({
+          message: `User with id "${user1.id}" is not subscribed to user with id "${user2.id}"`,
+        });
+        return;
+      }
+
+      const subscribedToUserIds = user1.subscribedToUserIds.filter(
+        (id) => id !== user2.id,
+      );
+
+      await fastify.db.users.change(user1.id, { subscribedToUserIds });
+
+      reply.code(200).send({ ...user1, subscribedToUserIds });
+    },
   );
 
   fastify.patch(
@@ -72,7 +218,31 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<UserEntity> {}
+    async function (request, reply): Promise<void> {
+      const user = await fastify.db.users.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
+
+      if (!user) {
+        reply
+          .code(400)
+          .send({ message: getNoEntityIdErrorMessage(request.params.id) });
+        return;
+      }
+
+      const { firstName, lastName, email } = request.body;
+
+      const newFields = {
+        firstName: firstName || user.firstName,
+        lastName: lastName || user.lastName,
+        email: email || user.email,
+      };
+
+      await fastify.db.users.change(request.params.id, newFields);
+
+      reply.code(200).send({ ...user, ...newFields });
+    },
   );
 };
 
