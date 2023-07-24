@@ -47,6 +47,12 @@ export const schema = buildSchema(`
     subscribedToUserIds: [String!]!
   }
   
+  input UserInput {
+    email: String!
+    firstName: String!
+    lastName: String!
+  }
+  
   type UserWithRelations {
     email: String
     firstName: String
@@ -108,5 +114,9 @@ export const schema = buildSchema(`
     usersWithSubscriptionsAndProfiles: [UserWithSubscriptionsAndProfile]
     userByIdWithSubscribersAndPosts(id: ID!): UserByIdWithSubscribersAndPosts
     usersWithSubscriptions: [UsersWithSubscriptions]
+  }
+
+  type Mutation {
+    createUser(input: UserInput): User
   }
 `);

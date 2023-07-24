@@ -5,6 +5,7 @@ import { resolveUserById } from './resolvers/resolve-user-by-id';
 import { resolveUsersWithSubscriptionsAndProfiles } from './resolvers/resolve-users-with-subscriptions-and-profiles';
 import { resolveUserByIdWithSubscribersAndPosts } from './resolvers/resolve-user-by-id-with-subscribers-and-posts';
 import { resolveUsersWithSubscriptions } from './resolvers/resolve-users-with-subscriptions';
+import { resolveCreateUser } from './resolvers/resolve-create-user';
 
 export const rootValue = {
   entities: resolveEntities,
@@ -14,4 +15,5 @@ export const rootValue = {
   usersWithSubscriptionsAndProfiles: resolveUsersWithSubscriptionsAndProfiles,
   userByIdWithSubscribersAndPosts: resolveUserByIdWithSubscribersAndPosts,
   usersWithSubscriptions: resolveUsersWithSubscriptions,
+  createUser: resolveCreateUser,
 };
